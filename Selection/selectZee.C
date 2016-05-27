@@ -83,6 +83,8 @@ void selectZee(const TString conf="zee.conf", // input file
   // load pileup reweighting file
   TFile *f_rw = TFile::Open("../Tools/pileup_rw_baconDY.root", "read");
 
+  TFile *f_r9 = TFile::Open("../EleScale/transformation.root","read");
+
   // for systematics we need 3
   TH1D *h_rw = (TH1D*) f_rw->Get("h_rw_golden");
   TH1D *h_rw_up = (TH1D*) f_rw->Get("h_rw_up_golden");
@@ -91,6 +93,9 @@ void selectZee(const TString conf="zee.conf", // input file
   if (h_rw==NULL) cout<<"WARNIG h_rw == NULL"<<endl;
   if (h_rw_up==NULL) cout<<"WARNIG h_rw == NULL"<<endl;
   if (h_rw_down==NULL) cout<<"WARNIG h_rw == NULL"<<endl;
+
+  TGraph* gR9EB = (TGraph*) f->Get("transformR90");
+  TGraph* gR9EE = (TGraph*) f->Get("transformR91");
 
   //--------------------------------------------------------------------------------------------------------------
   // Main analysis code 
@@ -426,6 +431,14 @@ void selectZee(const TString conf="zee.conf", // input file
 
 	    }else{//MC
 
+	      float r9prime; // r9 corrections MC only
+	      if(tagisBarrel){
+	                r9prime = gR9EB->Eval(r9);}
+	      else { 
+	                r9prime = gR9EE->Eval(r9);
+	      }
+	      tag->r9 = r9prime;
+
 	      tagSmear = eleCorr.getSmearingSigma(info->runNum, tagisBarrel, tag->r9, tagAbsEta, tagEt, 0., 0.);
 
               float tagSmearE = tagSmear + std::hypot(eleCorr.getSmearingSigma(info->runNum, tagisBarrel, tag->r9, tagAbsEta, tagEt, 1., 0.) - tagSmear,  eleCorr.getSmearingSigma(info->runNum, tagisBarrel, tag->r9, tagAbsEta, tagEt, 0., 1.) - tagSmear);
@@ -555,6 +568,14 @@ void selectZee(const TString conf="zee.conf", // input file
               (vProbe) *= probeScale;
 
             }else{//MC
+
+	      float r9prime; // r9 corrections MC only
+	      if(probeisBarrel){
+	                r9prime = gR9EB->Eval(r9);}
+	      else { 
+	                r9prime = gR9EE->Eval(r9);
+	      }
+	      scProbe->r9 = r9prime;
 
               probeSmear = eleCorr.getSmearingSigma(info->runNum, probeisBarrel, scProbe->r9, probeAbsEta, probeEt, 0., 0.);
 
