@@ -24,6 +24,7 @@
 #include <sstream>                  // class for parsing strings
 #include "TLorentzVector.h"         // 4-vector class
 #include <TRandom3.h>
+#include "TGraph.h"
 
 // define structures to read in ntuple
 #include "BaconAna/DataFormats/interface/BaconAnaDefs.hh"
@@ -95,6 +96,10 @@ void computeAccSelZeeBinned(const TString conf,            // input file
   // load pileup reweighting file
   TFile *f_rw = TFile::Open("../Tools/pileup_rw_baconDY.root", "read");
   TH1D *h_rw = (TH1D*) f_rw->Get("h_rw_golden");
+
+  TFile *f_r9 = TFile::Open("../EleScale/transformation.root","read");
+  TGraph* gR9EB = (TGraph*) f_r9->Get("transformR90");
+  TGraph* gR9EE = (TGraph*) f_r9->Get("transformR91");
 
 
   //--------------------------------------------------------------------------------------------------------------
@@ -282,9 +287,17 @@ void computeAccSelZeeBinned(const TString conf,            // input file
             float ele1Et       = vEle1.E() / cosh(ele1AbsEta);
             bool  ele1isBarrel = ele1AbsEta < 1.4442;
 
-              ele1Smear = eleCorr.getSmearingSigma(info->runNum, ele1isBarrel, ele1->r9, ele1AbsEta, ele1Et, 0., 0.);
+              float ele1R9Prime; // r9 corrections MC only
+              if(ele1isBarrel){
+                        ele1R9Prime = gR9EB->Eval(ele1->r9);}
+              else {
+                        ele1R9Prime = gR9EE->Eval(ele1->r9);
+              }
 
-              float ele1SmearE = ele1Smear + std::hypot(eleCorr.getSmearingSigma(info->runNum, ele1isBarrel, ele1->r9, ele1AbsEta, ele1Et, 1., 0.) - ele1Smear,  eleCorr.getSmearingSigma(info->runNum, ele1isBarrel, ele1->r9, ele1AbsEta, ele1Et, 0., 1.) - ele1Smear);
+
+              ele1Smear = eleCorr.getSmearingSigma(info->runNum, ele1isBarrel, ele1R9Prime, ele1AbsEta, ele1Et, 0., 0.);
+
+              float ele1SmearE = ele1Smear + std::hypot(eleCorr.getSmearingSigma(info->runNum, ele1isBarrel, ele1R9Prime, ele1AbsEta, ele1Et, 1., 0.) - ele1Smear,  eleCorr.getSmearingSigma(info->runNum, ele1isBarrel, ele1R9Prime, ele1AbsEta, ele1Et, 0., 1.) - ele1Smear);
               double ele1Ramdom = gRandom->Gaus(0,1);
               ele1Error = vEle1.E() * (1.0 + ele1SmearE * ele1Ramdom);
               ele1Smear = 1. + ele1Smear * ele1Ramdom;
@@ -327,9 +340,17 @@ void computeAccSelZeeBinned(const TString conf,            // input file
             float ele2Et       = vEle2.E() / cosh(ele2AbsEta);
             bool  ele2isBarrel = ele2AbsEta < 1.4442;
 
-              ele2Smear = eleCorr.getSmearingSigma(info->runNum, ele2isBarrel, ele2->r9, ele2AbsEta, ele2Et, 0., 0.);
+              float ele2R9Prime; // r9 corrections MC only
+              if(ele2isBarrel){
+                        ele2R9Prime = gR9EB->Eval(ele2->r9);}
+              else {
+                        ele2R9Prime = gR9EE->Eval(ele2->r9);
+              }
 
-              float ele2SmearE = ele2Smear + std::hypot(eleCorr.getSmearingSigma(info->runNum, ele2isBarrel, ele2->r9, ele2AbsEta, ele2Et, 1., 0.) - ele2Smear,  eleCorr.getSmearingSigma(info->runNum, ele2isBarrel, ele2->r9, ele2AbsEta, ele2Et, 0., 1.) - ele2Smear);
+
+              ele2Smear = eleCorr.getSmearingSigma(info->runNum, ele2isBarrel, ele2R9Prime, ele2AbsEta, ele2Et, 0., 0.);
+
+              float ele2SmearE = ele2Smear + std::hypot(eleCorr.getSmearingSigma(info->runNum, ele2isBarrel, ele2R9Prime, ele2AbsEta, ele2Et, 1., 0.) - ele2Smear,  eleCorr.getSmearingSigma(info->runNum, ele2isBarrel, ele2R9Prime, ele2AbsEta, ele2Et, 0., 1.) - ele2Smear);
               double ele2Ramdom = gRandom->Gaus(0,1);
               ele2Error = vEle2.E() * (1.0 + ele2SmearE * ele2Ramdom);
               ele2Smear = 1. + ele2Smear * ele2Ramdom;
